@@ -19,6 +19,8 @@ const state = {
   crystalTimer: 0,
   gameOver: false,
   pointer: { x: 480, y: 310, active: false },
+  slowTimer: 0,
+  fireTimer: 0,
 };
 
 const keys = {};
@@ -50,6 +52,8 @@ function resetGame() {
   state.spawnTimer = 0;
   state.crystalTimer = 0;
   state.gameOver = false;
+  state.slowTimer = 0;
+  state.fireTimer = 0;
 }
 
 resetGame();
@@ -98,15 +102,18 @@ function spawnThief() {
     x, y, r: 13, speed: rand(42, 60) + state.time * 0.35,
     carrying: null,
     stunned: 0,
+    burning: -1,
   });
 }
 
 function spawnCrystal() {
+  const isRed = Math.random() < 0.2;
   state.crystals.push({
     x: rand(80, state.width - 80),
     y: rand(80, state.height - 80),
     r: 10,
     ttl: 14,
+    kind: isRed ? "red" : "blue",
   });
 }
 
@@ -170,6 +177,12 @@ function updateBrainrots(dt) {
 
 function updateThieves(dt) {
   for (const t of state.thieves) {
+    if (t.burning > 0) {
+      t.burning -= dt;
+      if (t.burning <= 0) t.dead = true;
+      continue;
+    }
+    const slow = state.slowTimer > 0 ? 0.55 : 1;
     if (t.stunned > 0) {
       t.stunned -= dt;
       continue;
@@ -180,8 +193,8 @@ function updateThieves(dt) {
       const dx = target.x - t.x;
       const dy = target.y - t.y;
       const dist = Math.hypot(dx, dy) || 1;
-      t.x += (dx / dist) * t.speed * dt;
-      t.y += (dy / dist) * t.speed * dt;
+      t.x += (dx / dist) * t.speed * slow * dt;
+      t.y += (dy / dist) * t.speed * slow * dt;
       if (dist < target.r + t.r) {
         t.carrying = target;
         target.carried = true;
@@ -192,8 +205,8 @@ function updateThieves(dt) {
       const dx = target.x - t.x;
       const dy = target.y - t.y;
       const dist = Math.hypot(dx, dy) || 1;
-      t.x += (dx / dist) * (t.speed + 20) * dt;
-      t.y += (dy / dist) * (t.speed + 20) * dt;
+      t.x += (dx / dist) * (t.speed + 20) * slow * dt;
+      t.y += (dy / dist) * (t.speed + 20) * slow * dt;
       t.carrying.x = t.x;
       t.carrying.y = t.y;
       if (dist < 6) {
@@ -205,6 +218,7 @@ function updateThieves(dt) {
   }
   // collisions with walls
   for (const t of state.thieves) {
+    if (t.burning > 0) continue;
     for (const w of state.walls) {
       const dx = t.x - w.x;
       const dy = t.y - w.y;
@@ -217,6 +231,7 @@ function updateThieves(dt) {
       }
     }
   }
+  state.thieves = state.thieves.filter((t) => !t.dead);
 }
 
 function updateCrystals(dt) {
@@ -273,6 +288,19 @@ function makeBolt(x1, y1, x2, y2) {
   return { points, ttl: 0.18 };
 }
 
+function triggerFirestorm() {
+  state.fireTimer = 1.8;
+  for (const t of state.thieves) {
+    t.burning = 0.9;
+    if (t.carrying) {
+      t.carrying.carried = false;
+      t.carrying = null;
+    }
+  }
+  state.walls = [];
+  state.crystals = [];
+}
+
 function canvasToWorld(e) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = state.width / rect.width;
@@ -307,9 +335,15 @@ function handlePickups() {
   state.crystals = state.crystals.filter((c) => {
     const dist = Math.hypot(p.x - c.x, p.y - c.y);
     if (dist < p.r + c.r + 2) {
-      p.energy = Math.min(100, p.energy + 12);
-      p.crystals += 1;
-      state.score += 8;
+      if (c.kind === "red") {
+        triggerFirestorm();
+        state.score += 15;
+      } else {
+        p.energy = Math.min(100, p.energy + 12);
+        p.crystals += 1;
+        state.score += 8;
+        state.slowTimer = 3.5;
+      }
       return false;
     }
     return true;
@@ -463,6 +497,17 @@ function drawThieves() {
       ctx.fillStyle = "#00000088";
       ctx.fillRect(-t.r, -t.r - 6, t.r * 2, 8);
     }
+    if (t.burning > 0) {
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = "rgba(255,120,60,0.8)";
+      ctx.beginPath();
+      ctx.moveTo(0, -t.r - 6);
+      ctx.lineTo(6, -t.r + 8);
+      ctx.lineTo(-6, -t.r + 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+    }
     ctx.restore();
   }
 }
@@ -471,7 +516,7 @@ function drawCrystals() {
   for (const c of state.crystals) {
     ctx.save();
     ctx.translate(c.x, c.y);
-    ctx.fillStyle = "#7be3ff";
+    ctx.fillStyle = c.kind === "red" ? "#ff6b6b" : "#7be3ff";
     ctx.beginPath();
     ctx.moveTo(0, -c.r);
     ctx.lineTo(c.r, 0);
@@ -513,6 +558,25 @@ function drawLightning() {
   ctx.restore();
 }
 
+function drawFirestorm() {
+  if (state.fireTimer <= 0) return;
+  const intensity = Math.min(1, state.fireTimer / 1.8);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.fillStyle = `rgba(255,120,60,${0.25 * intensity})`;
+  ctx.fillRect(0, 0, state.width, state.height);
+  for (let i = 0; i < 40; i++) {
+    const x = Math.random() * state.width;
+    const y = Math.random() * state.height;
+    ctx.fillStyle = `rgba(255,180,80,${0.35 * intensity})`;
+    ctx.beginPath();
+    ctx.arc(x, y, rand(6, 12), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalCompositeOperation = "source-over";
+  ctx.restore();
+}
+
 function render() {
   ctx.clearRect(0, 0, state.width, state.height);
   drawBackground();
@@ -521,6 +585,7 @@ function render() {
   drawBrainrots();
   drawThieves();
   drawLightning();
+  drawFirestorm();
   drawPlayer();
   if (state.gameOver) {
     ctx.fillStyle = "rgba(0,0,0,0.65)";
@@ -536,6 +601,8 @@ function update(dt) {
   if (state.gameOver) return;
   state.time += dt;
   state.score += dt * 2;
+  if (state.slowTimer > 0) state.slowTimer = Math.max(0, state.slowTimer - dt);
+  if (state.fireTimer > 0) state.fireTimer = Math.max(0, state.fireTimer - dt);
   updatePlayer(dt);
   updateBrainrots(dt);
   updateThieves(dt);

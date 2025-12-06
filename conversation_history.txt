@@ -159,3 +159,51 @@ main.js
 +2
 -2
 
+----------
+
+make it so crystals slow down robbers when you get them
+
+----------
+
+Crystals now trigger a slow debuff on robbers: collecting one sets a short slow timer, and all thieves move at ~55% speed until it expires (timer ticks down in the main update). Updated game/main.js with the slowTimer state, applied speed scaling to thief movement, decremented the timer, and set it when crystals are picked up. Added a controls note about crystals slowing robbers in game/index.html. Refresh to feel the pacing; I can stretch the slow duration or make it stack if you’d like.
+
+2 files changed
++10
+-4
+
+Undo
+
+View all changes
+index.html
++1
+-0
+
+main.js
++9
+-4
+
+----------
+
+there should be red crystal and collecting them sets everything on fire except the meowls and the floor
+
+----------
+
+Added red crystals that trigger a firestorm: when collected, they ignite all robbers (burn away after a brief flash), clear walls and crystals, and overlay fiery visuals while meowls/floor stay safe. Robbers show a burning flame during the effect. Blue crystals still give energy/charges and slow robbers. Updated files: game/main.js (red crystal logic, firestorm, burning visuals, timers) and game/index.html (controls text for blue/red crystals). Refresh to try it—grab a red crystal and watch the arena light up.
+
+2 files changed
++69
+-6
+
+Undo
+
+View all changes
+index.html
++2
+-1
+
+main.js
++67
+-5
+
+
+
