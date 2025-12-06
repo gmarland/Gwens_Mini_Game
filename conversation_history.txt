@@ -1,4 +1,4 @@
-I would like to make a web based browser game called "Gwen Mini Games". It should be a combination of minecraft and steal a brainrot. you powers to protect your brainrots.
+I would like to make a web based browser game called "Gwen Mini Games". It should be a combination of minecraft and steal a brainrot. you use your powers to protect your brainrots.
 
 ----------
 
@@ -102,13 +102,14 @@ main.js
 +75
 -5
 
+----------
+
 i can use the lightening as much as i like
 
 ----------
 
 Lightning zaps are now unlimited—no energy check or cost in shootLightning (main.js), and controls text updated to reflect free zapping (index.html). Refresh and click away; if you want a short cooldown instead of costs, I can add that.
 
-----------
 
 2 files changed
 +1
