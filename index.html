@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gwen Mini Games</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="frame">
+    <header class="hud-bar">
+      <div class="title">
+        <span class="accent">Gwen</span> Mini Games
+      </div>
+      <div class="metrics">
+        <div id="score">Score: 0</div>
+        <div id="energy">Energy: 0</div>
+        <div id="brainrots">Brainrots: 0</div>
+      </div>
+    </header>
+
+    <canvas id="game" width="960" height="620"></canvas>
+
+    <section class="info">
+      <div class="card">
+        <h2>Goal</h2>
+        <p>Protect your brainrots from thieves. Mine crystal blocks to fuel powers.</p>
+      </div>
+      <div class="card controls">
+        <h2>Controls</h2>
+        <ul>
+          <li><strong>Move</strong> — Move mouse</li>
+          <li><strong>Zap Robbers</strong> — Click them</li>
+          <li><strong>Shockwave</strong> — Space (costs 10 energy)</li>
+          <li><strong>Drop Wall</strong> — E (costs 1 crystal)</li>
+          <li><strong>Reset</strong> — R</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Vibe</h2>
+        <p>Chunky, blocky arena with brainrot buddies wandering around like mobs. Thieves will grab them; bump them off and reclaim your crew.</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
